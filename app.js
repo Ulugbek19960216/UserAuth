@@ -1,31 +1,33 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
-
+const path = require("path");
 
 const app = express();
-const port = 4000;
+const port = 3000;
+
+app.set("views", path.join(__dirname, "server", "views"));
 
 
-
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "public")));
 app.set("view engine", 'ejs');
+
 app.use(bodyParser.urlencoded({
     extended:true
-}))
+}));
 
-app.get("/", (req, res) => {
-    res.send("home");
-})
+app.get('/home', (req, res) => {
+    res.render("home");
+});
 
 
-app.get("/login", (req, res) => {
-    res.send("login");
+app.get('/login', (req, res) => {
+    res.render("login");
 })
 
 
 app.get("/register", (req, res) => {
-    res.send("register");
+    res.render("register");
 })
 
 
