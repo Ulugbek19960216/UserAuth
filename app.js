@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const path = require("path");
 const mongoose = require("mongoose");
+const encrypt = require("mongoose-encryption");
 
 const app = express();
 const port = 3000;
@@ -12,11 +13,13 @@ const templatePath = path.join(__dirname, "./server/views");
 
 app.use(express.static("public"));
 app.use(bodyParser.urlencoded({
-    extended:false
+    extended:true
 }));
 
 app.set("view engine", 'ejs');
 app.set("views", templatePath);
+
+
 // Connect to the MongoDB database using the specified URL
 mongoose
   .connect("mongodb://127.0.0.1:27017/userDB")
@@ -28,15 +31,16 @@ mongoose
   });
 
 
-const userSchema = {
+const userSchema = new mongoose.Schema ({
     firstName: String,
     lastName: String,
     address: String,
     phoneNumber: String,
     email: String,
     password: String
-};
- 
+});
+const secret = "Thisishowencryptionworks";
+userSchema.plugin(encrypt, { secret:secret, encryptedFields:["password"] });
 // 
 const User = new mongoose.model("User", userSchema);
 
