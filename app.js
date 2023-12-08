@@ -4,8 +4,8 @@ const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const path = require("path");
 const mongoose = require("mongoose");
-const md5 = require("md5");
-
+const bcrypt = require("bcrypt");
+const saltRounds = 16;
 
 const app = express();
 const port = 3000;
@@ -49,35 +49,41 @@ const User = new mongoose.model("User", userSchema);
 
 // user registration, saving password and name on database
 app.post("/register", function(req, res) {
-    const newUser = new User({
-        firstName: req.body.firstName,
-        lastName:   req.body.lastName,
-        address:    req.body.address,
-        phoneNumber: req.body.phone,
-        email: req.body.email,
-        password: md5(req.body.password)
+    bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
+        const newUser = new User({
+            firstName: req.body.firstName,
+            lastName:   req.body.lastName,
+            address:    req.body.address,
+            phoneNumber: req.body.phone,
+            email: req.body.email,
+            password: hash
+        });
+    
+        newUser.save() 
+            .then (() => {
+                res.render("home")
+            }) 
+            .catch(err =>  {
+                console.log(err);
+            })
+        
     });
 
-    newUser.save() 
-        .then (() => {
-            res.render("home")
-        }) 
-        .catch(err =>  {
-            console.log(err);
-        })
+    });
     
-});
 
 app.post("/login", (req, res) => {
     const email = req.body.email;
-    const password = md5(req.body.password);
+    const password = req.body.password;
 
     User.findOne({email: email})
         .then((foundUser) => {
-            if(foundUser && foundUser.password === password) {
-                res.render("home");
-                console.log("successfully logged in");
-            }
+            bcrypt.compare(password, foundUser.password, function(err, result) {
+                if(result === true) {
+                    res.render("home");
+                    console.log("Successfully Logged in");
+                }
+            });
         })
         .catch((err) => {
             res.render("login", { error: "Incorrect password" });
