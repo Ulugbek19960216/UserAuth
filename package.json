@@ -30,6 +30,7 @@
     "express-session": "^1.17.3",
     "mongoose": "^8.0.3",
     "mongoose-encryption": "^2.1.2",
+    "mongoose-findorcreate": "^4.0.0",
     "nvm": "^0.0.4",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
