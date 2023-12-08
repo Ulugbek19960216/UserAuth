@@ -50,7 +50,9 @@ const userSchema = new mongoose.Schema ({
     address: String,
     phoneNumber: String,
     email: String,
-    password: String
+    password: String,
+    googleId: String,
+    googleEmail: String,
 });
 
 userSchema.plugin(passportLocalMongoose, {usernameField: 'email'});
@@ -84,14 +86,14 @@ passport.use(new GoogleStrategy({
     userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo"
   },
   function(accessToken, refreshToken, profile, cb) {
-    User.findOrCreate({ googleId: profile.id }, function (err, user) {
+    User.findOrCreate({ googleId: profile.id, googleEmail: profile.emails[0].value }, function (err, user) {
       return cb(err, user);
     });
   }
 ));
 
 app.get("/auth/google",
-    passport.authenticate("google", { scope: ["profile"]})
+    passport.authenticate("google", { scope: ["profile", "email"]})
 );
 
 app.get("/auth/google/home", 
