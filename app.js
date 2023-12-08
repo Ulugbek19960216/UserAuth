@@ -4,24 +4,31 @@ const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const path = require("path");
 const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
-const saltRounds = 16;
+const session = require('express-session');
+const passport = require("passport");
+const passportLocalMongoose = require("passport-local-mongoose");
 
 const app = express();
 const port = 3000;
-
-
 
 const templatePath = path.join(__dirname, "./server/views");
 
 
 app.use(express.static("public"));
+app.set("view engine", 'ejs');
+app.set("views", templatePath);
 app.use(bodyParser.urlencoded({
     extended:true
 }));
 
-app.set("view engine", 'ejs');
-app.set("views", templatePath);
+app.use(session({
+    secret: "Master computer science.",
+    resave: false,
+    saveUninitialized: false
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 
 // Connect to the MongoDB database using the specified URL
@@ -44,57 +51,16 @@ const userSchema = new mongoose.Schema ({
     password: String
 });
 
-// 
+userSchema.plugin(passportLocalMongoose, {usernameField: 'email'});
+ 
 const User = new mongoose.model("User", userSchema);
 
-// user registration, saving password and name on database
-app.post("/register", function(req, res) {
-    bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
-        const newUser = new User({
-            firstName: req.body.firstName,
-            lastName:   req.body.lastName,
-            address:    req.body.address,
-            phoneNumber: req.body.phone,
-            email: req.body.email,
-            password: hash
-        });
-    
-        newUser.save() 
-            .then (() => {
-                res.render("home")
-            }) 
-            .catch(err =>  {
-                console.log(err);
-            })
-        
-    });
+passport.use(User.createStrategy());
 
-    });
-    
-
-app.post("/login", (req, res) => {
-    const email = req.body.email;
-    const password = req.body.password;
-
-    User.findOne({email: email})
-        .then((foundUser) => {
-            bcrypt.compare(password, foundUser.password, function(err, result) {
-                if(result === true) {
-                    res.render("home");
-                    console.log("Successfully Logged in");
-                }
-            });
-        })
-        .catch((err) => {
-            res.render("login", { error: "Incorrect password" });
-        });
-})
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
 
 
-
-app.get('/home', (req, res) => {
-    res.render("home");
-});
 
 
 app.get('/login', (req, res) => {
@@ -106,11 +72,66 @@ app.get("/register", (req, res) => {
     res.render("register");
 })
 
+app.get("/admin", (req, res) => {
+    res.render("admin_page");
+})
 
+app.get("/home", function(req, res) {
+    if(req.isAuthenticated()) {
+        res.render("home");
+    } else {
+        res.redirect("/login");
+    }
+});
 
+app.get("/logout", (req, res) => {
+    req.logout(function (err) {
+        if(err) {
+            console.log(err);
+        }
+        res.redirect("/home");
+    });
+});
 
+// user registration, saving password and name on database
+app.post("/register", function(req, res) {
 
+   User.register({
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        address: req.body.address,
+        phoneNumber: req.body.phone,
+        email: req.body.email
+    }, req.body.password, function (err,user) {
+    if(err) {
+        console.log(err);
+        res.redirect("/register");
+    } else {
+        passport.authenticate("local")(req, res, function() {
+            res.redirect("/home");
+        })
+    }
+   })
+});
+    
 
+app.post("/login", function(req, res) {
+
+   const user = new User({
+     email: req.body.email,
+     password: req.body.password
+   });
+
+   req.login(user, function(err) {
+    if(err) {
+        console.log(err);
+    } else {
+        passport.authenticate("local") (req, res, function() {
+            res.redirect("/home");
+        });
+    }
+   });
+});
 
 
 
