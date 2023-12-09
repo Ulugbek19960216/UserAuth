@@ -1,44 +1,137 @@
 <%- include("partials/header.ejs") %>
 
-<div class="jumbotron centered">
-  <div class="container ">
-    
-    <div class="table-responsive">
-      <table class="table ">
-        <caption>List of users</caption>
-  <thead>
-    <tr>
-      <th scope="col">#</th>
-      <th scope="col">First</th>
-      <th scope="col">Last</th>
-      <th scope="col">Handle</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th scope="row">1</th>
-      <td>Mark</td>
-      <td>Otto</td>
-      <td>@mdo</td>
-    </tr>
-    <tr>
-      <th scope="row">2</th>
-      <td>Jacob</td>
-      <td>Thornton</td>
-      <td>@fat</td>
-    </tr>
-    <tr>
-      <th scope="row">3</th>
-      <td>Larry</td>
-      <td>the Bird</td>
-      <td>@twitter</td>
-    </tr>
-  </tbody>
-      </table>
-    </div>
+<div class="jumbotron text-center">
+  <div class="container custom-container">
+      <div class="row">
+          <div class="col-md-6">
+              <a class="btn btn-light text-success font-weight-bold btn-lg" onclick="toggleTable('userTable')" role="button">Show all User</a>
+          </div>
+          <div class="col-md-6 mb-10">
+              <a class="btn btn-light text-success font-weight-bold btn-lg" onclick="toggleTable('adminTable')" role="button">Show all Admin</a>
+          </div>
+      </div>
 
+      <div class=" row custom-spacing">
+          <div class="col-md-12">
+              <div class="userTable" style="display: none;">
+                  <h4 class="text-center mt-10">Users Table</h4>
+                  <div id="userTableContainer"></div>
+                  <p id="userCounter"></p>
+              </div>
+          </div>
+      </div>
+
+      <div class="row custom-spacing">
+          <div class="col-md-12">
+              <div class="adminTable" style="display: none;">
+                  <h4 class="text-center mt-10">Admin Table</h4>
+                  <div id="adminTableContainer"></div>
+                  <p id="adminCounter"></p>
+              </div>
+          </div>
+      </div>
   </div>
 </div>
 
+<script>
+  function toggleTable(tableId) {
+    const table = document.querySelector(`.${tableId}`);
+    table.style.display = table.style.display === 'none' ? 'block' : 'none';
+
+    if (table.style.display === 'block') {
+      if (tableId === 'userTable') {
+        showAllUsers();
+      } else if (tableId === 'adminTable') {
+        showAllAdmins();
+      }
+    }
+  }
+
+  function showAllUsers() {
+    fetch('/admin/users')
+      .then(response => response.json())
+      .then(data => {
+        const userTableContainer = document.getElementById('userTableContainer');
+        const userCounter = document.getElementById('userCounter');
+
+        // Display all users
+        const allUsersTable = generateUserTable(data.allUsers);
+        userTableContainer.innerHTML = allUsersTable;
+        userCounter.textContent = `Total Users: ${data.allUsers.length}`;
+      })
+      .catch(error => console.error('Error fetching user data:', error));
+  }
+
+  function generateUserTable(users) {
+    let counter = 0;
+    return `<table class="table">
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Fname</th>
+                  <th>Lname</th>
+                  <th>Address</th>
+                  <th>Phone</th>
+                  <th>Email</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${users.map(user => `
+                  <tr>
+                    <td>${counter += 1 }</td>
+                    <td>${user.firstName}</td>
+                    <td>${user.lastName}</td>
+                    <td>${user.address}</td>
+                    <td>${user.phoneNumber}</td>
+                    <td>${user.email}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>`;
+  }
+
+  function showAllAdmins() {
+    fetch('/admin/users')
+      .then(response => response.json())
+      .then(data => {
+        const adminTableContainer = document.getElementById('adminTableContainer');
+        const adminCounter = document.getElementById('adminCounter');
+
+        // Display all admins
+        const allAdminsTable = generateAdminTable(data.allAdmins);
+        adminTableContainer.innerHTML = allAdminsTable;
+        adminCounter.textContent = `Total Admins: ${data.allAdmins.length}`;
+      })
+      .catch(error => console.error('Error fetching admin data:', error));
+  }
+
+  function generateAdminTable(admins) {
+    let counter = 0;
+    return `<table class="table">
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Fname</th>
+                  <th>Lname</th>
+                  <th>Address</th>
+                  <th>Phone</th>
+                  <th>Email</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${admins.map(admin => `
+                  <tr>
+                    <td>${counter += 1}</td>
+                    <td>${admin.firstName}</td>
+                    <td>${admin.lastName}</td>
+                    <td>${admin.address}</td>
+                    <td>${admin.phoneNumber}</td>
+                    <td>${admin.email}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>`;
+  }
+</script>
 
 <%- include('partials/footer') %>

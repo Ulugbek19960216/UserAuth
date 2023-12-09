@@ -202,7 +202,7 @@ app.get("/admin", isAdmin, (req, res) => {
 
 // this function is manually assign the role of admin to certain users who registred by filling input fill by updating their role in the database.
 
-User.findOneAndUpdate({ email: "sherovulugbek04@gmail.com"}, { role: "admin"}) 
+User.findOneAndUpdate({ email: "alexcline@gmail.com"}, { role: "admin"}) 
   .exec()
   .then(user => {
       console.log("User via input form assigned admin role.");
@@ -224,7 +224,23 @@ User.findOneAndUpdate({ googleEmail: "sherovulugbek04@gmail.com"}, { role: "admi
   });
 
 
-
+  app.get('/admin/users', isAdmin, async (req, res) => {
+    try {
+      // Fetch all users and admins from the database
+      const users = await User.find({}, 'firstName lastName address phoneNumber email role');
+  
+      // Separate users and admins
+      const allUsers = users.filter(user => user.role === 'user');
+      const allAdmins = users.filter(user => user.role === 'admin');
+  
+      // Send the data back as a JSON response
+      res.json({ allUsers, allAdmins });
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+  
 
 
 
