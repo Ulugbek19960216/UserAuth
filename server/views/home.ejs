@@ -5,6 +5,9 @@
     
     <h1> HomePage </h1>
     <a class="btn btn-light text-danger font-weight-bold btn-lg" href="/logout" role="button">Log Out</a>
+    <%  if (user && user.role === "admin") { %>
+    <a class="btn btn-light text-success font-weight-bold btn-lg" href="/admin" role="button">Admin Page</a>
+      <% } %>
   </div>
 </div>
 

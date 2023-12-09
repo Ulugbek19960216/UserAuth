@@ -53,6 +53,7 @@ const userSchema = new mongoose.Schema ({
     password: String,
     googleId: String,
     googleEmail: String,
+    role: {type: String, default: 'user'}
 });
 
 userSchema.plugin(passportLocalMongoose, {usernameField: 'email'});
@@ -67,7 +68,8 @@ passport.serializeUser(function(user, cb) {
       return cb(null, {
         id: user.id,
         username: user.username,
-        picture: user.picture
+        picture: user.picture,
+        role: user.role,
       });
     });
   });
@@ -86,7 +88,10 @@ passport.use(new GoogleStrategy({
     userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo"
   },
   function(accessToken, refreshToken, profile, cb) {
-    User.findOrCreate({ googleId: profile.id, googleEmail: profile.emails[0].value }, function (err, user) {
+    User.findOrCreate(
+      { googleId: profile.id, googleEmail: profile.emails[0].value },
+      {role: "user"},
+      function (err, user) {
       return cb(err, user);
     });
   }
@@ -112,17 +117,23 @@ app.get("/register", (req, res) => {
     res.render("register");
 })
 
-app.get("/admin", (req, res) => {
-    res.render("admin_page");
-})
-
 app.get("/home", function(req, res) {
-    if(req.isAuthenticated()) {
-        res.render("home");
-    } else {
-        res.redirect("/login");
-    }
+  if(req.isAuthenticated()) {
+    console.log("User", req.user, req.user.role);
+      res.render("home", {user: req.user});
+      
+  } else {
+      res.redirect("/login");
+  }
 });
+
+// app.get("/home", function(req, res) {
+//     if(req.isAuthenticated()) {
+//         res.render("home", {user: req.user});
+//     } else {
+//         res.redirect("/login");
+//     }
+// });
 
 app.get("/logout", (req, res) => {
     req.logout(function (err) {
@@ -141,7 +152,8 @@ app.post("/register", function(req, res) {
         lastName: req.body.lastName,
         address: req.body.address,
         phoneNumber: req.body.phone,
-        email: req.body.email
+        email: req.body.email,
+        role: "user"
     }, req.body.password, function (err,user) {
     if(err) {
         console.log(err);
@@ -172,6 +184,47 @@ app.post("/login", function(req, res) {
     }
    });
 });
+
+// checking if user is Admin
+
+function isAdmin(req, res, next) {
+  if(req.isAuthenticated() && req.user.role === "admin") {
+      return next();
+  }
+  res.redirect("/home");
+}
+
+
+app.get("/admin", isAdmin, (req, res) => {
+  res.render("admin");
+});
+
+
+// this function is manually assign the role of admin to certain users who registred by filling input fill by updating their role in the database.
+
+User.findOneAndUpdate({ email: "sherovulugbek04@gmail.com"}, { role: "admin"}) 
+  .exec()
+  .then(user => {
+      console.log("User via input form assigned admin role.");
+  })
+  .catch(err => {
+    console.log(err);
+  });
+
+
+// this function is manually assign the role of admin to certain users who registred by their google account by updating their role in the database.
+
+User.findOneAndUpdate({ googleEmail: "sherovulugbek04@gmail.com"}, { role: "admin"}) 
+  .exec()
+  .then(user => {
+      console.log("Google account assigned admin role.");
+  })
+  .catch(err => {
+    console.log(err);
+  });
+
+
+
 
 
 
