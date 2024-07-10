@@ -127,13 +127,6 @@ app.get("/home", function(req, res) {
   }
 });
 
-// app.get("/home", function(req, res) {
-//     if(req.isAuthenticated()) {
-//         res.render("home", {user: req.user});
-//     } else {
-//         res.redirect("/login");
-//     }
-// });
 
 app.get("/logout", (req, res) => {
     req.logout(function (err) {
